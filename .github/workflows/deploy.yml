@@ -3,50 +3,49 @@ name: Deploy to DockerHub and Server
 on:
   push:
     branches:
-      - master  # Quando alguém fizer push para a branch "master"
+      - master # Quando alguém fizer push para a branch "master"
   pull_request:
     branches:
-      - master  # Quando alguém fizer pull request para a branch "master"
+      - master # Quando alguém fizer pull request para a branch "master"
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Definindo o ambiente de execução do GitHub Actions
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2  # Faz checkout do código do repositório
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2  # Configura o Buildx para construir a imagem Docker
-    
-    - name: Log in to DockerHub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}  # Username do DockerHub, armazenado como secret
-        password: ${{ secrets.DOCKER_PASSWORD }}  # Senha do DockerHub, armazenada como secret
+    runs-on: ubuntu-latest # Definindo o ambiente de execução do GitHub Actions
 
-    - name: Build Docker image
-      run: |
-        docker build -t samlope/minha-api-node .  # Comando para buildar a imagem Docker
-    
-    - name: Push Docker image to DockerHub
-      run: |
-        docker push samlope/minha-api-node  # Envia a imagem para o DockerHub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # Atualizando para a versão v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 # Atualizando para a versão v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3 # Atualizando para a versão v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }} # Username do DockerHub, armazenado como secret
+          password: ${{ secrets.DOCKER_PASSWORD }} # Senha do DockerHub, armazenada como secret
+
+      - name: Build Docker image
+        run: |
+          docker build -t samlope/minha-api-node .  # Comando para buildar a imagem Docker
+
+      - name: Push Docker image to DockerHub
+        run: |
+          docker push samlope/minha-api-node  # Envia a imagem para o DockerHub
 
   deploy:
-    runs-on: ubuntu-latest  # Mesmo ambiente do Job anterior
-    needs: build  # Esse job só executa após o build ser bem-sucedido
-    
+    runs-on: ubuntu-latest # Mesmo ambiente do Job anterior
+    needs: build # Esse job só executa após o build ser bem-sucedido
+
     steps:
-    - name: SSH to server and run container
-      uses: appleboy/ssh-action@v0.1.5  # Usando ação de SSH para acessar o servidor
-      with:
-        host: 201.23.3.86  # IP do seu servidor
-        username: aluno  # Seu nome de usuário no servidor
-        key: ${{ secrets.SSH_PRIVATE_KEY }}  # Chave privada SSH, armazenada como secret
-        port: 22  # Porta padrão do SSH
-        script: |
-          docker pull samlope/minha-api-node  # Puxa a imagem do DockerHub
-          docker stop minha-api-node || true  # Para o container anterior, se houver
-          docker rm minha-api-node || true  # Remove o container anterior, se houver
-          docker run -d -p 8103:8103 --name minha-api-node samlope/minha-api-node  # Executa o novo container
+      - name: SSH to server and run container
+        uses: appleboy/ssh-action@v0.1.5 # Usando ação de SSH para acessar o servidor
+        with:
+          host: 201.23.3.86 # IP do seu servidor
+          username: aluno # Seu nome de usuário no servidor
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # Chave privada SSH, armazenada como secret
+          port: 22 # Porta padrão do SSH
+          script: |
+            docker pull samlope/minha-api-node  # Puxa a imagem do DockerHub
+            docker stop minha-api-node || true  # Para o container anterior, se houver
+            docker rm minha-api-node || true  # Remove o container anterior
